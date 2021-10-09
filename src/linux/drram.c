@@ -1,4 +1,3 @@
-// For Windows: Compile with linking flags: -lkernel32
 #include <mruby.h>
 #include <string.h>
 #include <assert.h>
@@ -6,26 +5,7 @@
 #include <mruby/data.h>
 #include <dragonruby.h>
 
-#if defined(__APPLE__) || defined(__MACH__) || defined(__DARWIN__) || defined(__darwin__) || defined(__DARWIN) || defined(_DARWIN)
-#  define DRRAM_APPLE
-#elif defined(__WIN) || defined(_WIN32_) || defined(_WIN64_) || defined(__WIN32__) || defined(__WIN64__) || defined(_WINDOWS) || defined(__WINDOWS) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(_MSC_VER) || defined(__WINDOWS__) || defined(_X360) || defined(__X360) || defined(__X360__) || defined(_XBOXONE) || defined(__XBOX__) || defined(__XBOX) || defined(__xbox__) || defined(__xbox) || defined(_XBOX) || ((defined(_XBOX_ONE) || defined(_DURANGO)) && defined(_TITLE))
-#  define DRRAM_MICROSOFT
-#elif defined(__PS4__) || defined(__ORBIS__) || defined(_PS4) || defined(__PS4) || defined(PLAYSTATION4)
-#else
-#  define DRRAM_UNIX
-#endif
-
-#if defined(DRRAM_APPLE)
-#include <mach/mach.h>
-#include <mach/mach_host.h>
-
-#elif defined(DRRAM_MICROSOFT)
-#include <windows.h>
-
-#elif defined(DRRAM_UNIX)
 #include <sys/sysinfo.h>
-
-#endif
 
 typedef struct drram_stats {
   unsigned long long int total;
@@ -35,43 +15,6 @@ typedef struct drram_stats {
 extern drram_stats drram(void);
 
 extern drram_stats drram(void) {
-#if defined(DRRAM_APPLE)
-    mach_port_t host_port;
-    mach_msg_type_number_t host_size;
-    vm_size_t pagesize;
-    vm_statistics_data_t vm_stat;
-    
-    host_port = mach_host_self();
-    host_size = sizeof(vm_statistics_data_t) / sizeof(integer_t);
-    host_page_size(host_port, &pagesize);
-
-    if (host_statistics(host_port, HOST_VM_INFO, (host_info_t)&vm_stat, &host_size) != KERN_SUCCESS) {
-        return (drram_stats) { 0, 0 };
-    }
-    
-    natural_t mem_used = (vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count) * pagesize;
-    natural_t mem_free = vm_stat.free_count * pagesize;
-    natural_t mem_total = mem_used + mem_free;
-    
-    return (drram_stats) {
-        mem_total,
-        mem_free
-    };
-    
-#elif defined(DRRAM_MICROSOFT)
-    MEMORYSTATUSEX statex;
-    statex.dwLength = sizeof(statex);
-    
-    if (GlobalMemoryStatusEx(&statex)) {
-        return (drram_stats) {
-            statex.ullTotalPhys,
-            statex.ullAvailPhys
-        };
-    }
-    
-    return (drram_stats) { 0, 0 };
-
-#elif defined(DRRAM_UNIX)
     struct sysinfo si;
     sysinfo(&si);
     
@@ -79,8 +22,6 @@ extern drram_stats drram(void) {
         si.totalram,
         si.freeram
     };
-    
-#endif
 }
 
 // MRuby `typedef`s mrb_int in the mruby/value.h

@@ -47,15 +47,11 @@ drram.free          # Returns free RAM available (In bytes)
 
 ## Building
 
-For each C file in `src` simply do:
+In `src` folder there are folders containing source codes for each platform...
 
-```sh
-clang -shared <file>.c --sysroot=<your_mingw64_path> --target=<target> -fuse-ld=lld -isystem <dragonruby_pro_include_path> -I. -o <shared_library>
-```
+Simply compile extension to shared library with the way you compile DragonRuby Pro's C extensions with `-I` flag adding DragonRuby Pro's `include` directory path and with addition of linker flags which can be found in the sources...
 
-> NOTE 1: Each C file has thing you need to link, Check out the C file before compilation...
-
-> NOTE 2: It's encouraged to check out DragonRuby Pro's C extensions guide to know how to compile the extension correctly...
+> NOTE: For OSX and iOS some parts were written in Objective-C but they can do their job very well with DragonRuby...
 
 ## License (Public Domain)
 

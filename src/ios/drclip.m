@@ -1,5 +1,4 @@
-// For Windows: Compile with linking flags: -lkernel32 -luser32
-// For Apple: Compile with linking flags: -framework Foundation -framework AppKit (UIKit instead of AppKit on iOS)
+// linking flags: -framework Foundation -framework UIKit
 #include <mruby.h>
 #include <string.h>
 #include <assert.h>
@@ -7,26 +6,8 @@
 #include <mruby/data.h>
 #include <dragonruby.h>
 
-#if defined(__APPLE__) || defined(__MACH__) || defined(__DARWIN__) || defined(__darwin__) || defined(__DARWIN) || defined(_DARWIN)
-#  include <TargetConditionals.h>
-#  if defined(TARGET_OS_IOS) || defined(TARGET_OS_IPHONE)
-#    define DRCLIP_IOS
-#  elif defined(TARGET_OS_MAC)
-#    define DRCLIP_MAC
-#  endif
-#elif defined(__WIN) || defined(_WIN32_) || defined(_WIN64_) || defined(__WIN32__) || defined(__WIN64__) || defined(_WINDOWS) || defined(__WINDOWS) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(_MSC_VER) || defined(__WINDOWS__) || defined(_X360) || defined(__X360) || defined(__X360__) || defined(_XBOXONE) || defined(__XBOX__) || defined(__XBOX) || defined(__xbox__) || defined(__xbox) || defined(_XBOX) || ((defined(_XBOX_ONE) || defined(_DURANGO)) && defined(_TITLE))
-#  define DRCLIP_MICROSOFT
-#endif
-
-#if defined(DRCLIP_IOS)
-#  import <Foundation/Foundation.h>
-#  import <AppKit/AppKit.h>
-#elif defined(DRCLIP_MAC)
-#  import <Foundation/Foundation.h>
-#  import <UIKit/UIKit.h>
-#elif defined(DRCLIP_MICROSOFT)
-#  include <windows.h>
-#endif
+#import <Foundation/Foundation.h>
+#import <UIKit/UIPasteboard.h>
 
 typedef enum {
     DRCLIP_FALSE  = 0,
@@ -40,59 +21,24 @@ extern void drclip_clear(void);
 extern drclip_bool drclip_uninit(void);
 
 extern drclip_bool drclip_init(void) {
-#if defined(DRCLIP_IOS)
     return ([UIPasteboard generalPasteboard] != NULL) ? DRCLIP_TRUE : DRCLIP_FALSE;
-#elif defined(DRCLIP_MAC)
-    return ([NSPasteboard generalPasteboard] != NULL) ? DRCLIP_TRUE: DRCLIP_FALSE;
-#elif defined(DRCLIP_MICROSOFT)
-    return (OpenClipboard(NULL) != 0) ? DRCLIP_TRUE: DRCLIP_FALSE;
-#endif
 }
 
 extern char* drclip_get(void) {
-#if defined(DRCLIP_IOS)
     return strdup([[UIPasteboard generalPasteboard].string UTF8String]);
-#elif defined(DRCLIP_MAC)
-    return strdup([[[NSPasteboard generalPasteboard] stringForType:NSPasteboardTypeString] UTF8String]);
-#elif defined(DRCLIP_MICROSOFT)
-    return (char*) GetClipboardData(CF_TEXT);
-#endif
 }
 
 extern void drclip_set(char* text) {
-#if defined(DRCLIP_IOS)
     NSString *txt = [NSString stringWithFormat:@"%s", text];
     [UIPasteboard generalPasteboard].string = txt;
-#elif defined(DRCLIP_MAC)
-    NSString *txt = [NSString stringWithFormat:@"%s", text];
-    [[NSPasteboard generalPasteboard] clearContents];
-    [[NSPasteboard generalPasteboard] setString:txt forType:NSStringPboardType];
-#elif defined(DRCLIP_MICROSOFT)
-    EmptyClipboard();
-    HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, strlen(text) + 1);
-    char* buffer = (char*) GlobalLock(clipbuffer);
-    strcpy(buffer, (const char *) text);
-    GlobalUnlock(clipbuffer);
-    SetClipboardData(CF_TEXT, clipbuffer);
-#endif
 }
 
 extern void drclip_clear(void) {
-#if defined(DRCLIP_IOS)
     [UIPasteboard generalPasteboard].string = @"";
-#elif defined(DRCLIP_MAC)
-    [[NSPasteboard generalPasteboard] clearContents];
-#elif defined(DRCLIP_MICROSOFT)
-    EmptyClipboard();
-#endif
 }
 
 extern drclip_bool drclip_uninit(void) {
-#if defined(DRCLIP_IOS) || defined(DRCLIP_MAC)
     return DRCLIP_TRUE;
-#elif defined(DRCLIP_MICROSOFT)
-    return (CloseClipboard() != 0) ? DRCLIP_TRUE : DRCLIP_FALSE;
-#endif
 }
 
 // MRuby `typedef`s mrb_int in the mruby/value.h

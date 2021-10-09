@@ -1,5 +1,4 @@
-// For Windows: Compile with linking flags: -lkernel32
-// For Apple: Compile with linking flags: -framework Foundation -framework CoreFoundation -framework IOKit
+// linking flags: -framework Foundation -framework CoreFoundation -framework IOKit
 #include <mruby.h>
 #include <string.h>
 #include <assert.h>
@@ -7,34 +6,10 @@
 #include <mruby/data.h>
 #include <dragonruby.h>
 
-#if defined(__APPLE__) || defined(__MACH__) || defined(__DARWIN__) || defined(__darwin__) || defined(__DARWIN) || defined(_DARWIN)
-#  define DRBAT_APPLE
-#elif defined(__linux__) || defined(__LINUX__) || defined(__LINUX) || defined(__linux) && !defined(DRBAT_ANDROID)
-#  define DRBAT_LINUX
-#elif defined(__WIN) || defined(_WIN32_) || defined(_WIN64_) || defined(__WIN32__) || defined(__WIN64__) || defined(_WINDOWS) || defined(__WINDOWS) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(_MSC_VER) || defined(__WINDOWS__) || defined(_X360) || defined(__X360) || defined(__X360__) || defined(_XBOXONE) || defined(__XBOX__) || defined(__XBOX) || defined(__xbox__) || defined(__xbox) || defined(_XBOX) || ((defined(_XBOX_ONE) || defined(_DURANGO)) && defined(_TITLE))
-#  define DRBAT_MICROSOFT
-#endif
-
-#if defined(DRBAT_APPLE)
-#  import <Foundation/Foundation.h>
-#  include <CoreFoundation/CoreFoundation.h>
-#  import <IOKit/ps/IOPowerSources.h>
-#  import <IOKit/ps/IOPSKeys.h>
-#elif defined(DRBAT_LINUX)
-#  include <stdio.h>
-#  include <stdlib.h>
-#  include <unistd.h>
-#  include <string.h>
-#  include <math.h>
-#  include <sys/types.h>
-#  include <sys/stat.h>
-#  include <fcntl.h>
-#  define BATT_STATE "/proc/acpi/battery/BAT0/state"
-#  define BATT_INFO "/proc/acpi/battery/BAT0/info"
-#  define BATT_BUFLEN 256
-#elif defined(DRBAT_MICROSOFT)
-#  include <windows.h>
-#endif
+#import <Foundation/Foundation.h>
+#include <CoreFoundation/CoreFoundation.h>
+#import <IOKit/ps/IOPowerSources.h>
+#import <IOKit/ps/IOPSKeys.h>
 
 typedef struct drbat_state {
     unsigned is_charging;
@@ -46,8 +21,7 @@ typedef struct drbat_state {
 extern drbat_state drbat(void);
 
 extern drbat_state drbat(void) {
-#if defined(DRBAT_APPLE)
-    drbat_state res;
+    drbat_state state;
     CFTypeRef blob = IOPSCopyPowerSourcesInfo();
 	CFArrayRef sources = IOPSCopyPowerSourcesList(blob);
     int sourcesCount = CFArrayGetCount(sources);
@@ -63,8 +37,8 @@ extern drbat_state drbat(void) {
     
     CFDictionaryRef psrc = IOPSGetPowerSourceDescription(blob, CFArrayGetValueAtIndex(sources, 0));
     
-    res.is_charging = (CFDictionaryGetValue(psrc, CFSTR(kIOPSIsChargingKey)) == kCFBooleanTrue) ? 1 : 0;
-    res.sys_state = 1;
+    state.is_charging = (CFDictionaryGetValue(psrc, CFSTR(kIOPSIsChargingKey)) == kCFBooleanTrue) ? 1 : 0;
+    state.sys_state = 1;
     
     void *psval;
     
@@ -82,115 +56,6 @@ extern drbat_state drbat(void) {
     state.life_time = (unsigned long long) remaining_time;
     
     return state;
-
-#elif defined(DRBAT_LINUX)
-    // https://www.cemetech.net/forum/viewtopic.php?t=3638&start=0
-    int battStateHandle;
-    long int battRate_mA = 0;
-    long int battMax_mAh = 0;
-    long int battRemain_mAh = 0;
-    char buffer[BATT_READ_BUFLEN];
-    char tok_unit[8];
-    int readoffset;
-    short int readstate = 0;
-    short int readlen = 0;
-
-    if (-1 == (battStateHandle = open(PATH_BATT_INFO, O_RDONLY))) {
-        return (drbat_state) { 0, 0, 0, 0 };
-    }
-   
-    drbat_state state;
-  
-    while (readstate < 2) {
-        readoffset = 0;
-        readstate = 0;
-        
-        while (!readstate) {
-            if (0 > (readlen = read(battStateHandle, buffer + readoffset, 1))) {
-                return (drbat_state) { 0, 0, 0, 0 };
-            }
-            if (!readlen) {
-                readstate = 2;
-                break;
-            }
-            if ('\n' == *(buffer + readoffset)) {
-                readstate++;
-                *(buffer + readoffset + 1) = '\0';
-            }
-            readoffset++;
-        }
-        
-        if (readstate == 2) break;
-        if (NULL != strstr(buffer, "last full capacity")) {
-            if (0 >= sscanf(buffer + 25, "%ld %s", &battMax_mAh,tok_unit)) {
-                return (drbat_state) { 0, 0, 0, 0 };
-            }
-            break;
-        }
-    }
-    
-    close(battStateHandle);
-
-    if (-1 == (battStateHandle = open(PATH_BATT_STATE,O_RDONLY))) {
-        return (drbat_state) { 0, 0, 0, 0 };
-    }
-
-    readstate = 0;
-    while (readstate < 2) {
-        readoffset = 0;
-        readstate = 0;
-        while (!readstate) {
-           if (0 > (readlen = read(battStateHandle, buffer + readoffset, 1))) {
-                return (drbat_state) { 0, 0, 0, 0 };
-            }
-            if (0 == readlen) {
-                readstate = 2;
-                break;
-            }
-            if ('\n' == *(buffer + readoffset)) {
-                readstate++;
-                *(buffer + readoffset + 1) = '\0';
-            }
-            readoffset++;
-        }
-        if (readstate == 2) break;
-        if (NULL != strstr(buffer, "charging state")) {
-            if (NULL != strstr(buffer, "discharging")) state.sys_state = 2;
-            else if (NULL != strstr(buffer, "charged")) state.sys_state = 1;
-            else state.sys_state = 0;
-        } else if (NULL != strstr(buffer, "present rate")) {
-            if (0 >= sscanf(buffer + 25, "%ld %s", &battRate_mA, tok_unit)) {
-                return (drbat_state) { 0, 0, 0, 0 };
-            }
-        } else if (NULL != strstr(buffer, "remaining capacity")) {
-            if (0 >= sscanf(buffer + 25, "%ld %s", &battRemain_mAh,tok_unit)) {
-                return (drbat_state) { 0, 0, 0, 0 };
-            }
-        }
-    }
-    
-    close(battStateHandle);
-
-    state.percent = (unsigned) 100 * ((float) battRemain_mAh / (float) battMax_mAh);
-   
-    if (battRate_mA) {
-        unsigned time_hour = (int) (battRemain_mAh / battRate_mA);
-        state.life_time = (unsigned long long)(time_hour * 60 * 60);
-    }
-   
-    return state;
-
-#elif defined(DRBAT_MICROSOFT)
-    SYSTEM_POWER_STATUS s;
-    GetSystemPowerStatus(&s);
-    
-    return (drbat_state) {
-        (s.ACLineStatus == 1) ? 1 : 0,
-        (unsigned) s.BatteryFlag,
-        (unsigned) s.BatteryLifePercent,
-        (unsigned long long) s.BatteryLifeTime
-    };
-#endif
 }
 
 // MRuby `typedef`s mrb_int in the mruby/value.h

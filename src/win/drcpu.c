@@ -1,4 +1,4 @@
-// For Windows: Compile with linking flags: -lkernel32
+// linking flags: -lkernel32
 #include <mruby.h>
 #include <string.h>
 #include <assert.h>
@@ -6,32 +6,13 @@
 #include <mruby/data.h>
 #include <dragonruby.h>
 
-#if defined(__APPLE__) || defined(__MACH__) || defined(__DARWIN__) || defined(__darwin__) || defined(__DARWIN) || defined(_DARWIN)
-#  define DRCPU_APPLE
-#elif defined(__WIN) || defined(_WIN32_) || defined(_WIN64_) || defined(__WIN32__) || defined(__WIN64__) || defined(_WINDOWS) || defined(__WINDOWS) || defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(_MSC_VER) || defined(__WINDOWS__) || defined(_X360) || defined(__X360) || defined(__X360__) || defined(_XBOXONE) || defined(__XBOX__) || defined(__XBOX) || defined(__xbox__) || defined(__xbox) || defined(_XBOX) || ((defined(_XBOX_ONE) || defined(_DURANGO)) && defined(_TITLE))
-#  define DRCPU_MICROSOFT
-#elif defined(__PS4__) || defined(__ORBIS__) || defined(_PS4) || defined(__PS4) || defined(PLAYSTATION4)
-#  define DRCPU_PS4
-#else
-#  define DRCPU_UNIX
-#endif
+#include <stdlib.h>
+#include <windows.h>
 
-#if defined(DRCPU_APPLE)
-#  include <mach/mach.h>
-#  include <mach/mach_host.h>
-#  include <sys/types.h>
-#  include <sys/sysctl.h>
-#elif defined(DRCPU_MICROSOFT)
-#  include <windows.h>
-#  if (_MSC_VER)
-#    include <intrin.h>
-#  else
-#    include <cpuid.h>
-#  endif
-#  include <string.h>
-#elif defined(DRCPU_UNIX)
+#if (_MSC_VER)
+#  include <intrin.h>
+#else
 #  include <cpuid.h>
-#  include <string.h>
 #endif
 
 // MRuby `typedef`s mrb_int in the mruby/value.h
@@ -51,25 +32,6 @@ extern drcpu_stats drcpu(void);
 extern void drcpu_free(drcpu_stats stats);
 
 extern drcpu_stats drcpu(void) {
-#if defined(DRCPU_APPLE)
-    host_basic_info_data_t info;
-    mach_msg_type_number_t info_count;
-
-    info_count = HOST_BASIC_INFO_COUNT;
-    host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t)&info, &info_count);
-    
-    size_t buflen = 128;
-    char* buf = (char*) calloc(buflen + 1, sizeof(char));
-    sysctlbyname("machdep.cpu.brand_string", &buf, &buflen, NULL, 0);
-    
-    buf[buflen] = '\0';
-    
-    return (drcpu_stats) {
-        (unsigned int)(info.max_cpus),
-        buf
-    };
-
-#elif defined(DRCPU_MICROSOFT)
     SYSTEM_INFO sysinfo;
     char* CPUBrandString = (char*) calloc(0x40 + 1, sizeof(char));
     GetSystemInfo(&sysinfo);
@@ -118,43 +80,10 @@ extern drcpu_stats drcpu(void) {
         (unsigned int) sysinfo.dwNumberOfProcessors,
         CPUBrandString
     };
-
-#elif defined(DRCPU_PS4)
-    return (drcpu_stats) { 8, "AMD x86-64 Jaguar" };
-
-#elif defined(DRCPU_UNIX)
-    char* CPUBrandString = (char*) calloc(0x40 + 1, sizeof(char));
-
-    unsigned int CPUInfo[4] = {0,0,0,0};
-    __cpuid(0x80000000, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
-    unsigned int nExIds = CPUInfo[0];
-    memset(CPUBrandString, 0, sizeof(CPUBrandString));
-    
-    for (unsigned int i = 0x80000000; i <= nExIds; ++i) {
-        __cpuid(i, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
-
-        if (i == 0x80000002) {
-            memcpy(CPUBrandString, CPUInfo, sizeof(CPUInfo));
-        } else if (i == 0x80000003) {
-            memcpy(CPUBrandString + 16, CPUInfo, sizeof(CPUInfo));
-        } else if (i == 0x80000004) {
-            memcpy(CPUBrandString + 32, CPUInfo, sizeof(CPUInfo));
-        }
-    }
-    
-    CPUBrandString[0x40] = '\0';
-    
-    return (drcpu_stats) {
-        sysconf(_SC_NPROCESSORS_ONLN),
-        CPUBrandString
-    };
-#endif
 }
 
 extern void drcpu_free(drcpu_stats stats) {
-#if !defined(DRCPU_PS4)
     free(stats.name);
-#endif
 }
 
 void *(*drb_symbol_lookup)(const char *sym) = NULL;
