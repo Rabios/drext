@@ -53,7 +53,8 @@ For each C file in `src` simply do:
 clang -shared <file>.c --sysroot=<your_mingw64_path> --target=<target> -fuse-ld=lld -isystem <dragonruby_pro_include_path> -I. -o <shared_library>
 ```
 
-> NOTE: Each C file has thing you need to link, Checkout the C file before compilation...
+> NOTE 1: Each C file has thing you need to link, Check out the C file before compilation...
+> NOTE 2: It's encouraged to check out DragonRuby Pro's C extensions guide to know how to compile the extension correctly...
 
 ## License (Public Domain)
 
