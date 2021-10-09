@@ -54,6 +54,7 @@ clang -shared <file>.c --sysroot=<your_mingw64_path> --target=<target> -fuse-ld=
 ```
 
 > NOTE 1: Each C file has thing you need to link, Check out the C file before compilation...
+
 > NOTE 2: It's encouraged to check out DragonRuby Pro's C extensions guide to know how to compile the extension correctly...
 
 ## License (Public Domain)
