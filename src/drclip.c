@@ -1,5 +1,5 @@
 // For Windows: Compile with linking flags: -lkernel32 -luser32
-// For Apple: Compile with linking flags: -framework AppKit
+// For Apple: Compile with linking flags: -framework Foundation -framework AppKit
 #include <mruby.h>
 #include <string.h>
 #include <assert.h>
