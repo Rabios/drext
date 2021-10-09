@@ -18,18 +18,18 @@ C Extensions i made for [DragonRuby](https://dragonruby.org)
 ```rb
 # drbat (Windows, OSX, Linux)
 
-drbat.is_charging   # Is battery charging?
-drbat.sys_state     # Internal system state of battery, Differs depending on OS
+drbat.is_charging   # Is Battery charging?
+drbat.sys_state     # Internal system state of Battery, Differs depending on OS
 drbat.percent       # Percentage of Battery (From 0 to 100)
 drbat.life_time     # Lifetime of Battery
 
 # drclip (Windows, OSX, iOS)
 
-drclip_init         # Initializes clipboard, Returns 1 on success or 0 on error
-drclip_get          # Returns string from clipboard
-drclip_set(text)    # Sets clipboard string to text
-drclip_clear        # Clears clipboard
-drclip_uninit       # Deinitializes clipboard, Returns 1 on success or 0 on error
+drclip_init         # Initializes Clipboard, Returns 1 on success or 0 on error
+drclip_get          # Returns string from Clipboard
+drclip_set(text)    # Sets Clipboard string to text
+drclip_clear        # Clears Clipboard
+drclip_uninit       # Deinitializes the Clipboard, Returns 1 on success or 0 on error
 
 # drcpu (Windows, OSX, iOS, Linux, PS4)
 
