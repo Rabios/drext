@@ -1,5 +1,5 @@
 // For Windows: Compile with linking flags: -lkernel32 -luser32
-// For Apple: Compile with linking flags: -framework Foundation -framework AppKit
+// For Apple: Compile with linking flags: -framework Foundation -framework AppKit (UIKit instead of AppKit on iOS)
 #include <mruby.h>
 #include <string.h>
 #include <assert.h>
@@ -18,9 +18,12 @@
 #  define DRCLIP_MICROSOFT
 #endif
 
-#if defined(DRCLIP_IOS) || defined(DRCLIP_MAC)
+#if defined(DRCLIP_IOS)
 #  import <Foundation/Foundation.h>
 #  import <AppKit/AppKit.h>
+#elif defined(DRCLIP_MAC)
+#  import <Foundation/Foundation.h>
+#  import <UIKit/UIKit.h>
 #elif defined(DRCLIP_MICROSOFT)
 #  include <windows.h>
 #endif
