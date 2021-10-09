@@ -1,4 +1,5 @@
 // For Windows: Compile with linking flags: -lkernel32
+// For Apple: Compile with linking flags: -framework Foundation -framework CoreFoundation -framework IOKit
 #include <mruby.h>
 #include <string.h>
 #include <assert.h>
