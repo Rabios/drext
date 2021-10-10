@@ -23,7 +23,7 @@ extern drbat_state drbat(void);
 extern drbat_state drbat(void) {
     drbat_state state;
     CFTypeRef blob = IOPSCopyPowerSourcesInfo();
-	CFArrayRef sources = IOPSCopyPowerSourcesList(blob);
+    CFArrayRef sources = IOPSCopyPowerSourcesList(blob);
     int sourcesCount = CFArrayGetCount(sources);
     unsigned cur_cap = 0;
     unsigned max_cap = 0;
@@ -31,9 +31,9 @@ extern drbat_state drbat(void) {
     unsigned percent;
     
     if (sources <= 0 || !sources) {
-		if (blob) CFRelease(blob);
-		return (drbat_state) { 0, 0, 0, 0 };
-	}
+        if (blob) CFRelease(blob);
+        return (drbat_state) { 0, 0, 0, 0 };
+    }
     
     CFDictionaryRef psrc = IOPSGetPowerSourceDescription(blob, CFArrayGetValueAtIndex(sources, 0));
     
