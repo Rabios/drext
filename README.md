@@ -1,8 +1,8 @@
 # drext
 
-C Extensions i made for [DragonRuby](https://dragonruby.org)
+> NOTICE: Archived in favor of DragonRuby bindings for [ice_libs](https://github.com/Rabios/ice_libs), It's preferred to use ice_libs instead...
 
-> NOTE: DragonRuby Pro required for C Extensions.
+C Extensions i made for [DragonRuby](https://dragonruby.org)
 
 ## List
 
@@ -12,6 +12,8 @@ C Extensions i made for [DragonRuby](https://dragonruby.org)
 | drclip | native clipboard support library | Windows, OSX, iOS      |
 | drcpu  | CPU information library | Windows, OSX, iOS, Linux, PS4   |
 | drram  | RAM information library | Windows, OSX, iOS, Linux        |
+
+> Reminder: DragonRuby Pro required for C Extensions.
 
 ## API
 
